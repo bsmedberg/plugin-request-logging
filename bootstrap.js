@@ -39,23 +39,23 @@ let kLogger = {
       return Ci.nsIContentPolicy.ACCEPT;
     }
 
-    let resourceDomain = location.hostname;
-
     // We only care about video loads
     if (!mimeType.startsWith("video/")) {
       if (!(location instanceof Ci.nsIURL)) {
         return Ci.nsIContentPolicy.ACCEPT;
       }
-      let filePath = location.filePath.toLowerCase();
-      if (!(filePath.endsWith(".flv") ||
-            filePath.endsWith(".f4v") ||
-            filePath.endsWith(".f4p") ||
-            filePath.endsWith(".f4a") ||
-            filePath.endsWith(".f4b") ||
-            filePath.endsWith(".mp4"))) {
+      let extension = location.fileExtension.toLowerCase();
+      if (!(extension == "flv" ||
+            extension == "f4v" ||
+            extension == "f4p" ||
+            extension == "f4a" ||
+            extension == "f4b" ||
+            extension == "mp4")) {
         return Ci.nsIContentPolicy.ACCEPT;
       }
     }
+
+    let resourceDomain = location.host;
 
     let swfDomain = "?";
     try {
@@ -66,14 +66,14 @@ let kLogger = {
 
     let pageDomain = "?";
     try {
-      pageDomain = context.QueryInterface(Ci.nsIDOMNode).ownerDocument.location.hostname;
+      pageDomain = context.ownerDocument.location.hostname;
     } catch(e) {
       Cu.reportError(e);
     }
 
     let topDomain = "?";
     try {
-      topDomain = context.QueryInterface(Ci.nsIDOMNode).ownerDocument.defaultView.top.location.hostname;
+      topDomain = context.ownerDocument.defaultView.top.location.hostname;
     } catch (e) {
       Cu.reportError(e);
     }
