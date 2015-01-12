@@ -6,10 +6,13 @@ const Cr = Components.results;
 Cu.import("resource://gre/modules/XPCOMUtils.jsm");
 Cu.import("resource://gre/modules/Services.jsm");
 
+XPCOMUtils.defineLazyModuleGetter(this, "UpdateChannel",
+                                  "resource://gre/modules/UpdateChannel.jsm");
+
 let gCID;
 let gContract;
 
-let kLogURI = "http://stravinsky:8080/plugin-request-log";
+const kLogURI = "http://incoming.telemetry.mozilla.org/submit/telemetry/-/flash-video/%NAME%/%VERSION%/%CHANNEL%/%APPBUILDID%";
 
 function randomCID() {
   return Cc["@mozilla.org/uuid-generator;1"].getService(Ci.nsIUUIDGenerator).generateUUID();
@@ -84,21 +87,25 @@ let kLogger = {
   // Helpers
   _log: function(resourceDomain, swfDomain, pageDomain, topDomain) {
     let pingData = {
-      version: 1,
-      appname: Services.appinfo.name,
-      appversion: Services.appinfo.version,
-      buildid: Services.appinfo.appBuildID,
-      os: Services.appinfo.OS,
-      channel: Services.appinfo.defaultUpdateChannel,
-      locale: Cc["@mozilla.org/chrome/chrome-registry;1"].getService(Ci.nsIXULChromeRegistry).getSelectedLocale('global'),
+      ver: 1,
+      info: {
+        reason: "flash-video",
+        appName: Services.appinfo.name,
+        appUpdateChannel: UpdateChannel.get(),
+        appVersion: Services.appinfo.version,
+        appBuildID: Services.appinfo.appBuildID,
+        OS: Services.appinfo.OS,
+        locale: Cc["@mozilla.org/chrome/chrome-registry;1"].getService(Ci.nsIXULChromeRegistry).getSelectedLocale('global'),
+      },
       videoOrigin: resourceDomain,
       swfOrigin: swfDomain,
       pageOrigin: pageDomain,
       topOrigin: topDomain,
     };
+    let url = Services.urlFormatter.formatURL(kLogURI);
     let xhr = Cc["@mozilla.org/xmlextras/xmlhttprequest;1"].
       createInstance(Ci.nsIXMLHttpRequest);
-    xhr.open("PUT", kLogURI, true);
+    xhr.open("POST", url, true);
     xhr.addEventListener("error", function(e) {
       Cu.reportError("plugin-request-logging: the ping failed to submit: " + e);
     }, false);
